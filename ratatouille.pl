@@ -1,6 +1,6 @@
 % viveEn(dónde viven, nombre rata)
 viveEn(gusteaus, remy).
-viveEn(bar,emile).
+viveEn(bar, emile).
 viveEn(jeSuis, django).
 
 % cocina(nombre, qué platos saben cocinar, experiencia)
@@ -21,88 +21,86 @@ plato(ensaladaRusa, entrada([papa, zanahoria, arvejas, huevo, mayonesa])).
 plato(bifeDeChorizo, principal(pure, 25)).
 plato(frutillasConCrema, postre(265)).
 
-
 % Punto 1
 inspeccionSatisfactoria(Restaurante) :-
-    trabajaEn(Restaurante, _),
+    trabajaEn(Restaurante, _).  
     not(viveEn(Restaurante, _)).
 
 % Punto 2
-chef(Empleado, Restaurante) :-
-    trabajaEn(Restaurante, Empleado),
-    cocina(Empleado, _, _).
+chef(Chef, Restaurante) :-
+    trabajaEn(Restaurante, Chef),
+    cocina(Chef, _, _).
 
 % Punto 3
 chefcito(Rata) :-
-    viveEn(Restaurante, Rata),
-    trabajaEn(Restaurante, linguini).
+    trabajaEn(Restaurante, linguini),
+    viveEn(Restaurante, Rata).
 
 % Punto 4
-cocinaBien(Empleado, Plato) :-
-    cocina(Empleado, Plato, Experiencia),
-    Experiencia > 7.
+cocinaBien(Chef, Plato) :-
+    cocina(Chef, Plato, Experiencia),
+    Experiencia >= 7.
 
 cocinaBien(remy, Plato) :-
     plato(Plato, _).
 
 % Punto 5
-encargadoDe(Encargado, Plato, Restaurante) :-
-    cocinaEn(Encargado, Plato, Restaurante, ExperienciaMaxima),
-    forall(cocinaEn(Encargado, Plato, Restaurante, UnaExperiencia), ExperienciaMaxima >= UnaExperiencia).
+encargadoDe(Chef, Plato, Restaurante) :-
+    cocinaEn(Chef, Plato, Restaurante, unaExperiencia),
+    forall(cocinaEn(_, Plato, Restaurante, otraExperiencia), unaExperiencia >= otraExperiencia).
 
-cocinaEn(Encargado, Plato, Restaurante, Experiencia) :-
-    chef(Encargado, Restaurante),
-    cocina(Encargado, Plato, Experiencia).
+cocinaEn(Chef, Plato, Restaurante, Experiencia) :-
+    chef(Chef, Restaurante),
+    cocina(Chef, Plato, Experiencia).
 
 % Punto 6 
-saludable(Plato) :-
+esSaludable(Plato) :-
     plato(Plato, Tipo),
     caloriasPara(Tipo, Calorias),
     Calorias < 75.
 
 caloriasPara(entrada(Ingredientes), Calorias) :-
-    length(Ingredientes, Cuantos),
-    Calorias is Cuantos * 15. 
+    length(Ingredientes, Cantidad),
+    Calorias is Cantidad * 15.
     
 caloriasPara(principal(Guarnicion, Minutos), Calorias) :-
-    CaloriasCoccion is Minutos * 5,
+    CaloriasMinutos is Minutos * 5,
     caloriasPara(Guarnicion, CaloriasGuarnicion),
-    Calorias is CaloriasCoccion + CaloriasGuarnicion.
+    Calorias is CaloriasMinutos + CaloriasGuarnicion.
 
 caloriasPara(pure, 20).
-caloriasPara(papasFirtas, 50).
+caloriasPara(papasFritas, 20).
 caloriasPara(ensalada, 0).
+
 caloriasPara(postre(Calorias), Calorias).
 
 % Punto 7
 criticaPositiva(Restaurante, Critico) :-
+    chef(_, Restaurante),
     inspeccionSatisfactoria(Restaurante),
-    resenaPositiva(Restaurante, Critico).
+    reseniaPositiva(Critico, Restaurante).
 
-resenaPositiva(Restaurante, antonEgo) :-    
-    especialistaEn(ratatouille, Restaurante).
+reseniaPositiva(antonEgo, Restaurante) :-
+    forall(chef(Chef, Restaurante), cocinaBien(Chef, ratatouille)).
 
-especialistaEn(Plato, Restaurante) :-
-    forall(chef(Chef, Restaurante), cocinaBien(Chef, Plato)).
-    
-resenaPositiva(Restaurante, christophe) :-    
+reseniaPositiva(christophe, Restaurante) :-
     findall(Chef, chef(Chef, Restaurante), Chefs),
-    length(Chefs, Cuantos),
-    Cuantos > 3.
-
-resenaPositiva(Restaurante, cormillot) :-    
-    todosLosPlatosSaludables(Restaurante),
-    todosLosPlatosTieneZanahoria(Restaurante).
-
-todosLosPlatosSaludables(Restaurante) :-
-    forall(cocinaEn(_, Plato, Restaurante, _), saludable(Plato)).
-
-todosLosPlatosTieneZanahoria(Restaurante) :-
-    forall(entradasDe(Restaurante, Ingredientes), tieneZanahoria(Ingredientes)).
-
-entradasDe(Restaurante, Ingredientes) :-
-    plato(Plato, entrada(Ingredientes)),
-    cocinaEn(_, Plato; Restaurante, _).
+    length(Chefs, Cauntos),
+    Cauntos > 3.
     
+reseniaPositiva(cormillot, Restaurante) :-
+    todosPlatosSaludables(Restaurante),
+    todasEntradasTienenZanahorias(Restaurante).
+
+todosPlatosSaludables(Restaurante) :-
+    forall(cocinaEn(_, Plato, Restaurante, _), esSaludable(Plato)).
+
+todasEntradasTienenZanahorias(Restaurante) :-
+    forall(entradaDe(Restaurante, Ingredientes), tieneZanahoria(Ingredientes)).
+
+entradaDe(Restaurante, Ingredientes) :-
+    cocinaEn(_, Plato, Restaurante, _),
+    plato(Plato, entrada(Ingredientes)).
+
 tieneZanahoria(Ingredientes) :-
-    member(zanahoria, Ingredientes).    
+    member(zanahoria, Ingredientes). 
