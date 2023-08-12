@@ -44,99 +44,106 @@ edificio(maravillaMartinez, costo(10000, 10000, 10000)).
 esUnAfano(UnJugador, OtroJugador) :-
     jugador(UnJugador, UnRaiting, _),
     jugador(OtroJugador, OtroRaiting, _),
-    UnJugador \= OtroJugador,
     abs(UnRaiting - OtroRaiting) > 500.
 
 % 2
-esEfectivo(UnaUnidad, OtraUnidad) :-
-    militar(UnaUnidad, _, Categoria1),
-    militar(OtraUnidad, _, Categoria2),
+esEfectivo(Categoria1, Categoria2) :-
     leGana(Categoria1, Categoria2).
 
-esEfectivo(samurai, Tipo) :-
-    militar(Tipo, _, unica).
+esEfectivo(samurai, Categoria) :-
+    esMilitar(Categoria, _, unica).
 
 leGana(caballeria, arqueria).
 leGana(arqueria, infanteria).
 leGana(infanteria, piquero).
-leGana(piquero, caballeria).
+leGana(piqueros, caballeria).
 
+esMilitar(Tipo, Costo, Categoria) :-
+    militar(Tipo, Costo, Categoria).
 
 % 3
 alarico(Jugador) :-
-    soloTieneUnidadesDe(infanteria, Jugador).
+    tiene(Jugador, _),
+    soloTieneUnidadMilitarDe(Jugador, infanteria).
 
 % 4
 leonidas(Jugador) :-
-    soloTieneUnidadesDe(piqueros, Jugador).
-
-soloTieneUnidadesDe(Categoria, Jugador) :-
     tiene(Jugador, _),
-    forall(tiene(Jugador, unidad(Tipo, _)), militar(Tipo, _, Categoria)).
+    soloTieneUnidadMilitarDe(Jugador, piquero).
+
+soloTieneUnidadMilitarDe(Jugador, Categoria) :-
+    forall(tiene(Jugador, unidad(Tipo, _)), esMilitar(Tipo, _, Categoria)).
 
 % 5
 nomada(Jugador) :-
     tiene(Jugador, _),
-    not(tiene(Jugador, edificio(casa, _))).
+    not(tieneAlgunEfificio(Jugador, casa)).
+
+tieneAlgunEfificio(Jugador, Tipo) :-
+    tiene(Jugador, edificio(Tipo, _)).
 
 % 6
 cuantoCuesta(Tipo, Costo) :-
-    militar(Tipo, Costo, _).
+    esMilitar(Tipo, Costo, _).
 
 cuantoCuesta(Tipo, Costo) :-
-    edificio(Tipo, Costo).
+    esEdificio(Tipo, Costo).
 
 cuantoCuesta(Tipo, costo(0, 50, 0)) :-
-    aldeano(Tipo, _).
+    esAldeano(Tipo, _).
 
 cuantoCuesta(Tipo, costo(100, 0, 50)) :-
     esCarretaOUrna(Tipo).
+
+esEdificio(Tipo, Costo) :-    
+    edificio(Tipo, Costo).
+
+esAldeano(Tipo, Produccion) :-
+    aldeano(Tipo, Produccion).
 
 esCarretaOUrna(carreta).
 esCarretaOUrna(urna).
 
 % 7
 produccion(Tipo, ProduccionPorMinuto) :-
-    aldeano(Tipo, ProduccionPorMinuto).
+    esAldeano(Tipo, ProduccionPorMinuto).
 
-produccion(Tipo, produccionPorMinuto(0, 0, 32)) :-
+produccion(Tipo, produccion(0, 0, 32)) :-
     esCarretaOUrna(Tipo).
 
-produccion(Tipo, produccionPorMinuto(0, 0, Oro)) :-
-    militar(Tipo, _, _),
-    oroPorMinuto(Tipo, Oro).
+produccion(Tipo, produccion(0, 0, Oro)) :-
+    esMilitar(Tipo, _, _),
+    evaluarOro(Tipo, Oro).
 
-oroPorMinuto(keshiks, 10).
-oroPorMinuto(_, 0).
+evaluarOro(keshik, 10).
+evaluarOro(_, 0).
 
 % 8
-% recursos (Madera, Alimento, Oro)
-
-produccionTotal(Jugador, Recurso, ProduccionPorMinuto) :-
+produccionTotal(Jugador, Recurso, ProduccionTotalPorMinuto) :-
     tiene(Jugador, _),
-    recursos(Recurso),
-    findall(Produccion, loTieneYProduce(Jugador, Recurso, Produccion), Producciones),
-    sumlist(Producciones, ProduccionPorMinuto).
+    recurso(Recurso),
+    findall(Recurso, tieneYProduce(Jugador, Recurso, _), Recursos),
+    sumlist(Recursos, ProduccionTotalPorMinuto).
 
-loTieneYProduce(Jugador, Recurso, Produccion) :-
-    tiene(Jugador, unidad(Tipo, Cuantas)),
-    produccion(Tipo, ProduccionTotal),
-    produccionDelRecurso(Recurso, ProduccionTotal, ProduccionRecurso),
-    Produccion is ProduccionRecurso * Cuantas.
+tieneYProduce(Jugador, Recurso, Produccion) :-
+    tiene(Jugador, unidad(Tipo, Cantidad)),
+    produccion(Tipo, ProduccionPorMinuto),
+    produccionDelRecurso(Recurso, ProduccionPorMinuto, ProduccionDelRecurso),
+    Produccion is Cantidad * ProduccionDelRecurso. 
 
-produccionDelRecurso(madera, produce(Madera, _, _), Madera).
-produccionDelRecurso(alimento, produce(_, Alimento, _), Alimento).
-produccionDelRecurso(oro, produce(_, _, Oro), Oro).
+produccionDelRecurso(madera, produccion(Madera, _, _), Madera).
+produccionDelRecurso(alimento, produccion(_, Alimento, _), Alimento).
+produccionDelRecurso(oro, produccion(_, _, Oro), Oro).
 
-recursos(madera).
-recursos(alimento).
-recursos(oro).
+recurso(oro).
+recurso(madera).
+recurso(alimento).
 
 % 9
 
 % 10
-avanzaA(Jugador, Edad) :-
-    jugador(Jugador , _, _),
+avanza(Jugador, Edad) :-
+    jugador(Jugador, _, _),
     avanzaSegun(Jugador, Edad).
 
 avanzaSegun(_, edadMedia).
@@ -144,34 +151,33 @@ avanzaSegun(_, edadMedia).
 avanzaSegun(Jugador, edadFeudal) :-
     not(nomada(Jugador)),
     cumpleAlimento(Jugador, 500).
-    
+
 avanzaSegun(Jugador, edadDeLosCastillos) :-
     cumpleAlimento(Jugador, 800),
     cumpleOro(Jugador, 200),
-    edificioNecesarioParaEdadDeLosCastillos(Edificio),
-    tieneAlgunEdificioNecesario(Jugador, Edificio).
+    edificioEdadDdeCastillos(edificio),
+    tieneAlgunEfificio(Jugador, edificio).
 
 avanzaSegun(Jugador, edadImperial) :-
     cumpleAlimento(Jugador, 1000),
     cumpleOro(Jugador, 800),
-    edificioNecesarioParaEdadImperial(Edificio),
-    tieneAlgunEdificioNecesario(Jugador, Edificio).
+    edificioEdadImperial(edificio),
+    tieneAlgunEfificio(Jugador, edificio).
 
 cumpleAlimento(Jugador, Cantidad) :-
-    tiene(Jugador, recurso(_, alimento, _)),
-    alimento > Cantidad.
+    recursosJugador(Jugador, _, Alimento, _),
+    Alimento > Cantidad.
 
 cumpleOro(Jugador, Cantidad) :-
-    tiene(Jugador, recurso(_, _, oro)), 
-    oro > Cantidad.
+    recursosJugador(Jugador, _, _, Oro),
+    Oro > Cantidad.
 
-edificioNecesarioParaEdadDeLosCastillos(herreria).
-edificioNecesarioParaEdadDeLosCastillos(establo).
-edificioNecesarioParaEdadDeLosCastillos(galeriaDeTiro).
+recursosJugador(Jugador, Madera, Alimento, Oro) :-
+    tiene(Jugador, recurso(Madera, Alimento, Oro)).
 
-tieneAlgunEdificioNecesario(Jugador, Edificio) :-
-    tiene(Jugador, edificio(Edificio, _)).
+edificioEdadDdeCastillos(herreria).
+edificioEdadDdeCastillos(establo).
+edificioEdadDdeCastillos(galeriaDeTiro).
 
-edificioNecesarioParaEdadImperial(castillo).
-edificioNecesarioParaEdadImperial(universidad).
-
+edificioEdadImperial(castillo).
+edificioEdadImperial(universidad).

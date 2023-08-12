@@ -23,84 +23,80 @@ plato(frutillasConCrema, postre(265)).
 
 % Punto 1
 inspeccionSatisfactoria(Restaurante) :-
-    trabajaEn(Restaurante, _).  
+    trabajaEn(Restaurante, _),
     not(viveEn(Restaurante, _)).
 
-% Punto 2
+% 2
 chef(Chef, Restaurante) :-
     trabajaEn(Restaurante, Chef),
     cocina(Chef, _, _).
 
-% Punto 3
+% 3
 chefcito(Rata) :-
-    trabajaEn(Restaurante, linguini),
-    viveEn(Restaurante, Rata).
+    viveEn(Restaurante, Rata),
+    trabajaEn(Restaurante, linguini).
 
-% Punto 4
-cocinaBien(Chef, Plato) :-
-    cocina(Chef, Plato, Experiencia),
-    Experiencia >= 7.
-
+% 4
 cocinaBien(remy, Plato) :-
     plato(Plato, _).
 
-% Punto 5
-encargadoDe(Chef, Plato, Restaurante) :-
-    cocinaEn(Chef, Plato, Restaurante, unaExperiencia),
-    forall(cocinaEn(_, Plato, Restaurante, otraExperiencia), unaExperiencia >= otraExperiencia).
+cocinaBien(Chef, Plato) :-
+    cocina(Chef, Plato, Experiencia),
+    Experiencia > 7.
 
+% 5
+encargadoDe(Chef, Plato, Restaurante) :-
+    cocinaEn(Chef, Plato, Restaurante, MayorExperiencia),
+    forall(cocinaEn(Chef, Plato, Restaurante, Experiencia), MayorExperiencia >= Experiencia).
+  
 cocinaEn(Chef, Plato, Restaurante, Experiencia) :-
     chef(Chef, Restaurante),
     cocina(Chef, Plato, Experiencia).
 
-% Punto 6 
-esSaludable(Plato) :-
+% 6
+saludable(Plato) :-
     plato(Plato, Tipo),
-    caloriasPara(Tipo, Calorias),
+    caloriasPorPlato(Tipo, Calorias),
     Calorias < 75.
 
-caloriasPara(entrada(Ingredientes), Calorias) :-
+caloriasPorPlato(postre(Calorias), Calorias).
+
+caloriasPorPlato(entrada(Ingredientes), Calorias) :-
     length(Ingredientes, Cantidad),
     Calorias is Cantidad * 15.
-    
-caloriasPara(principal(Guarnicion, Minutos), Calorias) :-
-    CaloriasMinutos is Minutos * 5,
-    caloriasPara(Guarnicion, CaloriasGuarnicion),
-    Calorias is CaloriasMinutos + CaloriasGuarnicion.
 
-caloriasPara(pure, 20).
-caloriasPara(papasFritas, 20).
-caloriasPara(ensalada, 0).
+caloriasPorPlato(principal(Guarnicion, Minutos), Calorias) :-
+    caloriasPorPlato(Guarnicion, CaloriasGuarnicion),
+    CaloriasCoccion is Minutos * 5,
+    Calorias is CaloriasGuarnicion + CaloriasCoccion.
 
-caloriasPara(postre(Calorias), Calorias).
+caloriasPorPlato(papasFritas, 50).
+caloriasPorPlato(pure, 20).
+caloriasPorPlato(ensalada, 0).
 
-% Punto 7
+% 7
 criticaPositiva(Restaurante, Critico) :-
-    chef(_, Restaurante),
     inspeccionSatisfactoria(Restaurante),
-    reseniaPositiva(Critico, Restaurante).
+    reseniaCritico(Restaurante, Critico).
 
-reseniaPositiva(antonEgo, Restaurante) :-
-    forall(chef(Chef, Restaurante), cocinaBien(Chef, ratatouille)).
+reseniaCritico(Restaurante, antonEgo) :-
+    forall(chef(Chef, Restaurante), cocinaBien(Chef, ratatouille)).  
 
-reseniaPositiva(christophe, Restaurante) :-
+reseniaCritico(Restaurante, christophe) :-
     findall(Chef, chef(Chef, Restaurante), Chefs),
-    length(Chefs, Cauntos),
-    Cauntos > 3.
-    
-reseniaPositiva(cormillot, Restaurante) :-
+    length(Chefs, Cantidad),
+    Cantidad > 3.    
+
+reseniaCritico(Restaurante, cormillot) :-
     todosPlatosSaludables(Restaurante),
-    todasEntradasTienenZanahorias(Restaurante).
+    todosTienenZanahoria(Restaurante).
 
 todosPlatosSaludables(Restaurante) :-
-    forall(cocinaEn(_, Plato, Restaurante, _), esSaludable(Plato)).
+    forall(cocinaEn(_, Plato, Restaurante, _), saludable(Plato)).    
 
-todasEntradasTienenZanahorias(Restaurante) :-
-    forall(entradaDe(Restaurante, Ingredientes), tieneZanahoria(Ingredientes)).
+todosTienenZanahoria(Restaurante) :-
+    forall(entradaDe(Ingredientes, Restaurante), member(zanahoria, Ingredientes)).
 
-entradaDe(Restaurante, Ingredientes) :-
+entradaDe(Ingredientes, Restaurante) :-
     cocinaEn(_, Plato, Restaurante, _),
     plato(Plato, entrada(Ingredientes)).
-
-tieneZanahoria(Ingredientes) :-
-    member(zanahoria, Ingredientes). 

@@ -11,26 +11,22 @@ tiene(peter, trapeador).
 tiene(winston, varitaDeNeutrones).
 
 % 2
-satisfaceNecesidad(Integrante, Herramienta) :-
-    tiene(Integrante, Herramienta).
+satisfaceNecesidad(Persona, Herramienta) :-
+    tiene(Persona, Herramienta).
 
-satisfaceNecesidad(Integrante, aspiradora(PotenciaRequerida)) :-
-    tiene(Integrante, aspiradora(Potencia)),
+satisfaceNecesidad(Persona, aspiradora(PotenciaRequerida)) :-
+    tiene(Persona, aspiradora(Potencia)),
     between(0, Potencia, PotenciaRequerida).
 
 % 3
 puedeHacerTarea(Persona, Tarea) :-
-    herramientasRequeridas(Tarea, _),
-    tiene(Persona, varitaDeNeutrones).
-    
+    tiene(Persona, varitaDeNeutrones),
+    herramientasRequeridas(Tarea, _).
+
 puedeHacerTarea(Persona, Tarea) :-
     tiene(Persona, _),
-    requiereHerramienta(Tarea, _),
-    forall(requiereHerramienta(Tarea, Herramienta), satisfaceNecesidad(Persona, Herramienta)).
-    
-requiereHerramienta(Tarea, Herramienta) :-
-    herramientasRequeridas(Tarea, ListaDeHerramientas),
-    member(Herramienta, ListaDeHerramientas).
+    herramientasRequeridas(Tarea, Herramientas),
+    forall(member(Herramienta, Herramientas), satisfaceNecesidad(Persona, Herramienta)).
 
 % 4
 %tareaPedida(tarea, cliente, metrosCuadrados).
@@ -46,49 +42,41 @@ precio(limpiarBanio, 55).
 precio(cortarPasto, 10).
 precio(encerarPisos, 7).
 
-precioACobrar(Cliente, PrecioACobrar) :-
+valorACobrar(Cliente, ValorTotal) :-
     tareaPedida(_, Cliente, _),
-    findall(Precio, precioPorTarea(Cliente, _, Precio), ListaDePrecios),
-    sumlist(ListaDePrecios, PrecioACobrar).
-    
+    findall(Precio, precioPorTarea(Cliente, _, Precio), Precios),
+    sumlist(Precios, ValorTotal).    
+
 precioPorTarea(Cliente, Tarea, Precio) :-
-    precio(Tarea, PrecioPorMetroCuadrado),
     tareaPedida(Tarea, Cliente, MetrosCuadrados),
-    Precio is PrecioPorMetroCuadrado * MetrosCuadrados.
+    precio(Tarea, PrecioPorMetroCuadrado),
+    Precio is MetrosCuadrados * PrecioPorMetroCuadrado.
 
-%  5
+% 5
+esCompleja(limpiarTecho).
 
-aceptaPedido(Trabajador, Cliente) :-
-    puedeHacerPedido(Trabajador, Cliente),
-    estaDispuestoAHacer(Trabajador, Cliente).
+esCompleja(Tarea) :-
+    herramientasRequeridas(Tarea, Herramientas),
+    length(Herramientas, Cuantas),
+    Cuantas > 2.
 
-puedeHacerPedido(Trabajador, Cliente) :-
-    tiene(Trabajador, _),
+aceptaPedido(Persona, Cliente) :-
+    puedeHacerTodasLasTareas(Persona, Cliente),
+    dispuestoAHacer(Persona, Cliente).
+    
+puedeHacerTodasLasTareas(Persona, Cliente) :-
+    tiene(Persona, _),
     tareaPedida(_, Cliente, _),
-    forall(tareaPedida(Tarea, Cliente, _), puedeHacerTarea(Trabajador, Tarea)).
+    forall(tareaPedida(Tarea, Cliente, _), puedeHacerTarea(Persona, Tarea)).
 
-estaDispuestoAHacer(ray, Cliente) :-
+dispuestoAHacer(ray, Cliente) :-
     not(tareaPedida(limpiarTecho, Cliente, _)).
 
-estaDispuestoAHacer(winston, Cliente) :-
-    precioACobrar(Cliente, PrecioACobrar),
-    PrecioACobrar >= 500.
+dispuestoAHacer(winston, Cliente) :-
+    valorACobrar(Cliente, ValorTotal),
+    ValorTotal > 500.
 
-estaDispuestoAHacer(peter, _).
+dispuestoAHacer(egon, Cliente) :-
+    not((esCompleja(Tarea), tareaPedida(Tarea, Cliente, _))).
 
-estaDispuestoAHacer(egon, Cliente) :-
-    not((tareaPedida(Tarea, Cliente, _), tareaCompleja(Tarea))).
-    
-tareaCompleja(limpiarTecho).
-
-tareaCompleja(Tarea) :-
-    herramientasRequeridas(Tarea, Herramientas),
-    length(Herramientas, Cantidad),
-    Cantidad > 2.
-
-% 6
-    
-
-
-
-
+dispuestoAHacer(peter, _).

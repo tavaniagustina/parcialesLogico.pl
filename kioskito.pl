@@ -1,5 +1,4 @@
 % Punto 1
-
 atiende(dodain, lunes, 9, 15).
 atiende(dodain, miercoles, 9, 15).
 atiende(dodain, viernes, 9, 15).
@@ -11,43 +10,41 @@ atiende(juanFdS, viernes, 12, 20).
 atiende(leoC, lunes, 14, 18).
 atiende(leoC, miercoles, 14, 18).
 
-% Punto 1
-atiende(vale, dia, horaDeInicio, horaDeFinalizacion) :-
-    atiende(dodain, dia, horaDeInicio, horaDeFinalizacion).
+% 1
+atiende(vale, Dia, HoraDeInicio, HoraDeFinalizacion) :-
+    atiende(dodain, Dia, HoraDeInicio, HoraDeFinalizacion).
 
 atiende(vale, Dia, HoraDeInicio, HoraDeFinalizacion) :-
     atiende(juanC, Dia, HoraDeInicio, HoraDeFinalizacion).
 
-% El resto de los puntos por principio de universo cerrado no hacen falta agregarlos
+% Por el concepto de universo cerrado, lo que no es verdadero se considera falso, por lo q no hace 
+% falta agregarlo a la base de conocimiento
 
-% Punto 2
+% 2
 quienAtiende(Dia, Hora, Persona) :-
     atiende(Persona, Dia, HoraDeInicio, HoraDeFinalizacion),
     between(HoraDeInicio, HoraDeFinalizacion, Hora).
-    
-% Punto 3
+
+% 3
 foreverAlone(Persona, Dia, Hora) :-
     quienAtiende(Dia, Hora, Persona),
     not((quienAtiende(Dia, Hora, OtraPersona), Persona \= OtraPersona)).
-    
-% Punto 4
-posibilidadesDeAtencion(Dia, PersonasPosibles) :-
-    findall(Persona, distinct(Persona, quienAtiende(Dia, _, Persona)), Personas),
-    combinar(Personas, PersonasPosibles).
+
+% 4
+posibilidadDeAtencion(Dia, Personas) :-
+    atiende(Persona, _, _, _),
+    findall(Persona, quienAtiende(Dia, _, Persona), PersonasPosibles),
+    combinar(PersonasPosibles, Personas).
 
 combinar([], []).
 
-combinar([Persona|Personas],[Persona|PersonasPosibles]) :-
-    combinar(Personas, PersonasPosibles).
+combinar([Persona|PersonasPosibles], [Persona|Personas]) :-
+    combinar(PersonasPosibles, Personas).
 
-combinar([_|Personas], PersonasPosibles) :-
-    combinar(Personas, PersonasPosibles).
-    
-% Qué conceptos en conjunto resuelven este requerimiento
-% - findall como herramienta para poder generar un conjunto de soluciones que satisfacen un predicado
-% - mecanismo de backtracking de Prolog permite encontrar todas las soluciones posibles
+combinar([_|PersonasPosibles], Personas) :-
+    combinar(PersonasPosibles, Personas).   
 
-% Punto 5
+% 5
 venta(dodain, fecha(10, 08), [golosinas(1200), cigarrillos(jockey), golosinas(10)]).
 venta(dodain, fecha(12, 08), [bebida(true, 8), bebida(false, 1), golosinas(10)]).
 venta(martu, fecha(12, 08), [golosinas(100), cigarrillos([chesterfield, colorado, parisiennes])]).
@@ -57,7 +54,7 @@ venta(lucas, fecha(18, 08), [bebida(false, 2), cigarrillos(derby)]).
 esSuertuda(Persona) :-
     venta(Persona, _, _),
     forall(venta(Persona, _, [Venta|_]), ventaImportante(Venta)).
-
+    
 ventaImportante(golosinas(Precio)) :-
     Precio > 100.
 
